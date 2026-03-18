@@ -15,6 +15,7 @@ import type { BusStatus } from '@/lib/database.types';
 
 type BusWithTemplate = Tables['buses']['Row'] & {
   seat_map_templates: { id: string; name: string; rows: number; cols: number } | null;
+  bus_boarding_points: { id: string }[];
 };
 
 interface BusColumnsOptions {
@@ -70,10 +71,9 @@ export function useBusColumns({ onEdit, onEditSeatMap, onRetire }: BusColumnsOpt
     {
       id: 'boardingPoints',
       header: t('buses.boardingPoints'),
-      cell: () => {
-        // Boarding point count is not included in the buses query join.
-        // This column serves as a placeholder; the count would need a separate query or be added to the buses select.
-        return <Badge variant="secondary">--</Badge>;
+      cell: ({ row }) => {
+        const count = row.original.bus_boarding_points?.length ?? 0;
+        return <Badge variant="secondary">{count}</Badge>;
       },
     },
     {
@@ -100,12 +100,17 @@ export function useBusColumns({ onEdit, onEditSeatMap, onRetire }: BusColumnsOpt
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <MoreHorizontal className="h-4 w-4" />
                 <span className="sr-only">{t('common.actions')}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
               <DropdownMenuItem onClick={() => onEdit(bus)}>
                 <Pencil />
                 {t('common.edit')}

@@ -1,6 +1,6 @@
 import { validateAuth, unauthorizedResponse } from '../_shared/auth.ts';
 import { getServiceClient } from '../_shared/supabase.ts';
-import { corsHeaders, jsonResponse } from '../_shared/types.ts';
+import { corsHeaders, jsonResponse, extractPathId } from '../_shared/types.ts';
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -10,10 +10,7 @@ Deno.serve(async (req: Request) => {
   const auth = validateAuth(req);
   if (!auth.valid) return unauthorizedResponse(auth.error!);
 
-  // Extract offerId from URL path
-  const url = new URL(req.url);
-  const pathParts = url.pathname.split('/');
-  const offerId = pathParts[pathParts.indexOf('groundTransports') + 1];
+  const offerId = extractPathId(req.url);
   if (!offerId) {
     return jsonResponse({ error: 'Missing offerId' }, 400);
   }

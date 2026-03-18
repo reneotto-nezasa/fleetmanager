@@ -269,23 +269,40 @@ Trip Builder                          Bus Fleet Manager
 - Real-time seat updates
 - Seed data with 2 buses, 8 boarding points, sample bookings
 
-### What's Untested
+### What's Been Tested (E2E — Mar 18, 2026)
 
-- **End-to-end API flow** — No integration test with actual Trip Builder Connect API
+All 13 user stories verified against local Supabase. Full Connect API flow tested:
+
+- **UI:** All CRUD operations, seat map editor, PDFs, i18n, dark mode, command palette
+- **Connect API:** search → availability/hold → booking confirm → cancel, seat selection with specific seats + boarding point pricing
+- **Edge cases:** auth rejection, invalid bus codes, seat conflicts, capacity overflow, double cancel, expired holds
+
+See `REVIEW.md` for detailed test results and the 7 bugs found and fixed during testing.
+
+### What's Still Untested
+
+- **Integration with actual Trip Builder** — Tested locally, not against Trip Builder's Connect API client
 - **Concurrent seat holds** — Race conditions on simultaneous availability checks
-- **Edge Function deployment** — Only tested conceptually, never deployed to Supabase Edge
-- **Browser compatibility** — Developed in Chrome only
+- **Edge Function deployment** — Tested locally via `supabase functions serve`, not deployed to Supabase Edge
+- **Browser compatibility** — Developed and tested in Chrome only
 - **PDF output quality** — Generated but not print-verified
 
-### Known Issues (Fixed in This Review)
+### Known Issues (Fixed in Code Review + E2E Testing)
 
-See `REVIEW.md` for full details:
+See `REVIEW.md` for full details. 7 bugs total — all fixed:
 
 | # | Severity | Issue | Status |
 |---|----------|-------|--------|
 | B1 | BLOCKER | Booking endpoint called non-existent RPC | **Fixed** |
 | B2 | BLOCKER | Availability endpoint didn't create seat assignments | **Fixed** |
 | B3 | BUG | `instance_seat_id` nullable mismatch in types | **Fixed** |
+| E1 | BUG | i18n interpolation syntax (`{var}` → `{{var}}`) | **Fixed** |
+| E2 | BUG | Boarding point count missing on Buses page | **Fixed** |
+| E3 | BUG | Seat map edit navigated to wrong route | **Fixed** |
+| E4 | BUG | Dropdown menu triggered row click (event propagation) | **Fixed** |
+| E5 | BUG | Context menu on booked/blocked seats not appearing | **Fixed** |
+| E6 | BUG | `extractPathId` failed on Edge Runtime internal URLs | **Fixed** |
+| E7 | BUG | Search transport type filter case-sensitive | **Fixed** |
 
 ### Known Issues (Open — For Sourcegarden)
 
@@ -307,7 +324,7 @@ Prioritized roadmap for Sourcegarden:
 ### Phase 1: Deploy & Validate
 1. **Deploy to Supabase** — Provision project, run migration, deploy Edge Functions
 2. **Fix open issues** — M1 (hold expiry cron), M3 (boarding_points.code NOT NULL), Q1 (CHECK constraints)
-3. **E2E test with Trip Builder** — Wire up Connect API, test full search → hold → book → cancel flow
+3. ~~**E2E test with Trip Builder**~~ — ✅ Done locally (Mar 18). Full API flow verified. Next: test against actual Trip Builder Connect API client.
 4. **Concurrent access testing** — Validate seat holds under parallel requests
 
 ### Phase 2: Production Hardening

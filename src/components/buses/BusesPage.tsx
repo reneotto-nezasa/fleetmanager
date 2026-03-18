@@ -71,9 +71,7 @@ export function BusesPage() {
 
   const handleEditSeatMap = useCallback(
     (bus: BusWithTemplate) => {
-      if (bus.seat_map_id) {
-        navigate(`/seat-maps/${bus.seat_map_id}`);
-      }
+      navigate(`/buses/${bus.id}/seat-map`);
     },
     [navigate]
   );

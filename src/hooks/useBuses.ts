@@ -4,6 +4,7 @@ import type { Bus, BusStatus } from '@/lib/database.types';
 
 export interface BusWithTemplate extends Bus {
   seat_map_templates: { id: string; name: string; rows: number; cols: number } | null;
+  bus_boarding_points: { id: string }[];
 }
 
 export function useBuses() {
@@ -12,7 +13,7 @@ export function useBuses() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('buses')
-        .select('*, seat_map_templates(id, name, rows, cols)')
+        .select('*, seat_map_templates(id, name, rows, cols), bus_boarding_points(id)')
         .order('code');
       if (error) throw error;
       return data as BusWithTemplate[];

@@ -1,6 +1,6 @@
 import { validateAuth, unauthorizedResponse } from '../_shared/auth.ts';
 import { getServiceClient } from '../_shared/supabase.ts';
-import { corsHeaders, jsonResponse } from '../_shared/types.ts';
+import { corsHeaders, jsonResponse, extractPathId } from '../_shared/types.ts';
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -14,9 +14,7 @@ Deno.serve(async (req: Request) => {
   const auth = validateAuth(req);
   if (!auth.valid) return unauthorizedResponse(auth.error!);
 
-  const url = new URL(req.url);
-  const pathParts = url.pathname.split('/');
-  const bookingId = pathParts[pathParts.length - 1];
+  const bookingId = extractPathId(req.url);
   if (!bookingId) return jsonResponse({ error: 'Missing bookingId' }, 400);
 
   const supabase = getServiceClient();

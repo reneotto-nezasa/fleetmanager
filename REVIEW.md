@@ -1,20 +1,21 @@
 # Bus Fleet Manager — Code Review
 
 > Reviewer: Claude (automated review)
-> Date: 2026-03-18
-> Commit: Initial codebase (Feb 27, 2026)
-> Scope: Full codebase review — Edge Functions, hooks, schema, types, UI, i18n
+> Date: 2026-03-18 (updated: E2E test cycle)
+> Commit: Initial codebase (Feb 27, 2026) + E2E bug fixes
+> Scope: Full codebase review + E2E testing — Edge Functions, hooks, schema, types, UI, i18n, Connect API
 
 ---
 
 ## Summary
 
-The codebase is well-structured and internally consistent for a prototype. TypeScript compiles cleanly (`tsc --noEmit` = 0 errors), Vite build succeeds, and i18n keys match between `de.json` and `en.json`. Three bugs were found in Edge Functions — all fixed in this review cycle.
+The codebase is well-structured and internally consistent for a prototype. TypeScript compiles cleanly (`tsc --noEmit` = 0 errors), Vite build succeeds, and i18n keys match between `de.json` and `en.json`. The initial code review found 3 bugs in Edge Functions; subsequent E2E testing found 4 additional bugs in the UI and 2 more in Edge Functions — all fixed.
 
 | Severity | Count |
 |----------|-------|
 | BLOCKER (fixed) | 2 |
-| BUG (fixed) | 1 |
+| BUG (fixed) | 5 |
+| E2E BUG (fixed) | 2 |
 | MISSING (documented) | 3 |
 | QUALITY (recommendation) | 5 |
 
@@ -117,6 +118,102 @@ Both `anon` and `service_role` have unrestricted access to all tables. This is a
 
 ---
 
+## E2E Bugs — Fixed
+
+Found during end-to-end testing against local Supabase (Mar 18, 2026).
+
+### E1: i18n interpolation syntax wrong
+
+**Files:** `src/i18n/de.json`, `src/i18n/en.json`
+
+Seat count and capacity text used `{var}` instead of i18next's `{{var}}` syntax, rendering literal `{var}` in the UI.
+
+**Fix:** Changed all affected interpolation markers to `{{var}}`.
+
+### E2: Boarding point count shows `--` on Buses page
+
+**Files:** `src/hooks/useBuses.ts`, `src/components/buses/BusColumns.tsx`
+
+The `useBuses` query didn't join `bus_boarding_points`, so the boarding point count column always showed `--`.
+
+**Fix:** Added `bus_boarding_points(id)` to the select join in `useBuses`; column now reads `.bus_boarding_points.length`.
+
+### E3: "Edit seat map" navigated to wrong route
+
+**File:** `src/components/buses/BusesPage.tsx`
+
+The "Sitzplan bearbeiten" action navigated to `/seat-maps/:id` which doesn't exist. Correct route is `/buses/:id/seat-map`.
+
+**Fix:** Updated the navigation target.
+
+### E4: Dropdown menu items triggered row click (event propagation)
+
+**File:** `src/components/buses/BusColumns.tsx`
+
+Clicking "Retire" or "Edit seat map" in the dropdown also opened the bus edit sheet because click events propagated to the table row.
+
+**Fix:** Added `e.stopPropagation()` on the dropdown trigger and content.
+
+### E5: Context menu on booked/blocked seats not appearing
+
+**File:** `src/components/bookings/OccupancySeatMap.tsx`
+
+Radix `ContextMenuTrigger` was wrapping a non-DOM `TooltipProvider`, which prevented the context menu from rendering on booked/blocked seats.
+
+**Fix:** Restructured component nesting so `TooltipTrigger` wraps `ContextMenuTrigger` wraps the cell content.
+
+### E6: `extractPathId` failed on Edge Runtime internal URLs
+
+**File:** `supabase/functions/_shared/types.ts`
+
+The Supabase Edge Runtime strips the `/functions/v1/` prefix — functions receive URLs like `/{function-name}/{id}` instead of `/functions/v1/{function-name}/{id}`. The `extractPathId` helper didn't handle this pattern, causing all ID-dependent endpoints to return "Missing serviceId".
+
+**Fix:** Added a fallback: if `parts.length >= 2`, return the last path segment.
+
+### E7: Search transport type filter was case-sensitive
+
+**File:** `supabase/functions/ground-transports-search/index.ts`
+
+The search function required `"Bus"` (capital B) in `transportTypes`. Trip Builder may send `"bus"` (lowercase), returning zero results.
+
+**Fix:** Changed to case-insensitive comparison using `.toLowerCase()`.
+
+---
+
+## E2E Test Results
+
+Full end-to-end testing against local Supabase (Mar 18, 2026). All tests pass after bug fixes.
+
+### UI Tests
+- [x] US-1: Create/edit/retire bus
+- [x] US-2: Seat map editor (grid, cell types, zoom, undo, presets)
+- [x] US-3: Create boarding point form
+- [x] US-4: Assign boarding points to bus with add-on price
+- [x] US-5: Seat occupancy view, click seat → passenger detail, hover tooltip, capacity bar
+- [x] US-6: Block seat (available), move seat (booked) context menus
+- [x] US-7: Sitzplan PDF + Zustiegsliste PDF
+- [x] US-13: Dashboard KPIs, departures, quick actions
+- [x] NFR: i18n DE/EN, dark/light theme, Cmd+K command palette
+
+### Connect API Tests
+- [x] Heartbeat
+- [x] US-8 Search (correct results, auth rejection, empty results, case-insensitive transport type)
+- [x] US-9 Availability/Hold (creates hold, returns quoteId + heldSeats + expiry, auto-creates seat map instance)
+- [x] US-10 Booking Confirm (confirms held booking, updates seats held→booked, maps pax details)
+- [x] US-11 Details (returns bus info, seat map with live status, boarding points with addon prices)
+- [x] US-12 Cancel (cancels booking, releases seats back to available, decrements counters)
+- [x] Seat Selection (pick specific seats, hold with pax mapping, addon price calculation)
+
+### Edge Case Tests
+- [x] Missing Contract-Id → 401
+- [x] Invalid bus code → 404
+- [x] Seat conflict (already booked) → 409
+- [x] Double cancel → 409
+- [x] Capacity overflow → 404 with available count
+- [x] Non-existent booking → 404
+
+---
+
 ## Validation Checklist
 
 - [x] `tsc --noEmit` — 0 errors
@@ -126,3 +223,6 @@ Both `anon` and `service_role` have unrestricted access to all tables. This is a
 - [x] Seed data — consistent with schema (verified table names, column types, FK references)
 - [x] No secrets in committed files (`.env.local` is in `.gitignore`)
 - [x] DB schema matches `database.types.ts` (after B3 fix)
+- [x] E2E: All 13 user stories verified against local Supabase
+- [x] E2E: Full Connect API flow (search → hold → book → cancel) tested
+- [x] E2E: Seat selection with specific seat picks + boarding point pricing verified
