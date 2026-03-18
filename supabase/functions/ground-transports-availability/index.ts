@@ -1,6 +1,7 @@
 import { validateAuth, unauthorizedResponse } from '../_shared/auth.ts';
 import { getServiceClient } from '../_shared/supabase.ts';
 import { corsHeaders, jsonResponse } from '../_shared/types.ts';
+import type { ConnectAvailabilityRequest } from '../_shared/types.ts';
 
 const HOLD_TTL_MINUTES = 10;
 
@@ -19,7 +20,7 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: 'Missing serviceId' }, 400);
   }
 
-  const body = await req.json() as { departureDate: string; boardingPointCode?: string; paxCount: number };
+  const body = await req.json() as ConnectAvailabilityRequest;
   const supabase = getServiceClient();
 
   // Find bus by code
@@ -135,6 +136,13 @@ Deno.serve(async (req: Request) => {
     .from('instance_seats')
     .update({ status: 'held', held_until: expiresAt })
     .in('id', seatIds);
+
+  // Create preliminary seat assignments so booking confirmation can find them
+  const assignments = seats.map((s: { id: string }) => ({
+    booking_id: booking.id,
+    instance_seat_id: s.id,
+  }));
+  await supabase.from('seat_assignments').insert(assignments);
 
   return jsonResponse({
     quoteId: booking.id,

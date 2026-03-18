@@ -272,7 +272,7 @@ export interface Database {
         Row: {
           id: string;
           booking_id: string;
-          instance_seat_id: string;
+          instance_seat_id: string | null;
           passenger_title: string | null;
           passenger_first_name: string | null;
           passenger_last_name: string | null;
@@ -283,7 +283,7 @@ export interface Database {
         Insert: {
           id?: string;
           booking_id: string;
-          instance_seat_id: string;
+          instance_seat_id?: string | null;
           passenger_title?: string | null;
           passenger_first_name?: string | null;
           passenger_last_name?: string | null;
@@ -294,7 +294,7 @@ export interface Database {
         Update: {
           id?: string;
           booking_id?: string;
-          instance_seat_id?: string;
+          instance_seat_id?: string | null;
           passenger_title?: string | null;
           passenger_first_name?: string | null;
           passenger_last_name?: string | null;

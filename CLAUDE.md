@@ -7,9 +7,12 @@ Bus Fleet Manager is a lean bus inventory and seat management app for tour opera
 ## Read First
 
 1. `specs/BUS_FLEET_MANAGER_SPEC.md` — The complete specification (entities, schema, UI, API)
-2. `context/DECISIONS.md` — Key design decisions from the customer review
-3. `context/CONNECT_API_REFERENCE.md` — The Connect API contract
-4. `context/DISCOVERY_SUMMARY.md` — Bus fleet details and seat map specifics
+2. `specs/PRD.md` — Product requirements with user stories and acceptance criteria
+3. `context/DECISIONS.md` — Key design decisions from the customer review
+4. `context/CONNECT_API_REFERENCE.md` — The Connect API contract
+5. `context/DISCOVERY_SUMMARY.md` — Bus fleet details and seat map specifics
+6. `REVIEW.md` — Code review findings and fix log
+7. `HANDOVER.md` — Sourcegarden onboarding briefing
 
 ## Build & Deployment Workflow
 

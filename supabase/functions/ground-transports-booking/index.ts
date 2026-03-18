@@ -115,16 +115,19 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (instance) {
-      await supabase.rpc('increment_booked_seats', {
-        p_instance_id: instance.id,
-        p_count: seatIds.length,
-      }).catch(() => {
-        // Fallback: manual increment
-        supabase
+      // Read current counter then increment (no RPC needed)
+      const { data: inst } = await supabase
+        .from('seat_map_instances')
+        .select('booked_seats')
+        .eq('id', instance.id)
+        .single();
+
+      if (inst) {
+        await supabase
           .from('seat_map_instances')
-          .update({ booked_seats: (instance as unknown as { booked_seats: number }).booked_seats + seatIds.length })
+          .update({ booked_seats: inst.booked_seats + seatIds.length })
           .eq('id', instance.id);
-      });
+      }
     }
   }
 
