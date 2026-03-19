@@ -310,10 +310,22 @@ See `REVIEW.md` for full details. 7 bugs total — all fixed:
 |---|----------|-------|----------------|
 | M1 | MISSING | No hold expiry cron | Add pg_cron job (see REVIEW.md) |
 | M3 | MISSING | `boarding_points.code` nullable but API queries by it | Make NOT NULL |
+| M4 | MISSING | No user authentication, user management, or ACL | See note below — requires discussion with mTours |
 | Q1 | QUALITY | No CHECK constraints on status columns | Add constraints |
 | Q2 | QUALITY | No `updated_at` triggers | Add triggers on key tables |
 | Q3 | QUALITY | No distinct `expired` booking status | Consider adding |
 | Q5 | QUALITY | RLS policies fully open (anon + service_role) | Scope by Contract-Id |
+
+#### M4: Authentication & Access Control
+
+The prototype has no login screen, no user management, and no access control. This was intentionally deferred — the authentication method, user roles, and permission model were not yet defined during prototyping. For production use, a lightweight auth and ACL system is required.
+
+**What needs to be decided (Sourcegarden + mTours):**
+- **Authentication method** — Supabase Auth (email/password, SSO/SAML, magic link)? Integration with an existing mTours identity provider?
+- **User roles & permissions** — Which roles are needed (e.g., admin, operator, read-only)? Who can edit buses/seat maps vs. only view bookings?
+- **Multi-operator scoping** — If multiple operators share the system, data isolation by Contract-Id or separate Supabase projects?
+
+**Recommendation:** Start with Supabase Auth (built-in, supports email + social + SSO) and a simple role column on the users table. Expand to RLS row-level scoping once roles are defined. Keep it lightweight — this is a single-operator tool, not a multi-tenant SaaS.
 
 ---
 
@@ -328,15 +340,16 @@ Prioritized roadmap for Sourcegarden:
 4. **Concurrent access testing** — Validate seat holds under parallel requests
 
 ### Phase 2: Production Hardening
-5. **Multi-tenant auth** — Replace open RLS with Contract-Id scoping per customer
-6. **Error monitoring** — Add logging/alerting for Edge Function failures
-7. **Performance testing** — Validate API latency under load
-8. **UI polish** — Design review with Paula, browser testing, accessibility audit
+5. **User authentication & ACL** — Add login, user management, and role-based access control. Requires alignment with mTours on auth method and permission model (see M4 above). No login = no production deployment.
+6. **Multi-tenant auth** — Replace open RLS with Contract-Id scoping per customer
+7. **Error monitoring** — Add logging/alerting for Edge Function failures
+8. **Performance testing** — Validate API latency under load
+9. **UI polish** — Design review with Paula, browser testing, accessibility audit
 
 ### Phase 3: Extensions
-9. **v1.7 API extensions** — Per `CONNECT_API_V17_EXTENSIONS.md`
-10. **Additional bus types** — As mTours expands fleet
-11. **Reporting** — Occupancy trends, booking analytics
+10. **v1.7 API extensions** — Per `CONNECT_API_V17_EXTENSIONS.md`
+11. **Additional bus types** — As mTours expands fleet
+12. **Reporting** — Occupancy trends, booking analytics
 
 ---
 

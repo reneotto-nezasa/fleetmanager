@@ -16,7 +16,7 @@ The codebase is well-structured and internally consistent for a prototype. TypeS
 | BLOCKER (fixed) | 2 |
 | BUG (fixed) | 5 |
 | E2E BUG (fixed) | 2 |
-| MISSING (documented) | 3 |
+| MISSING (documented) | 4 |
 | QUALITY (recommendation) | 5 |
 
 ---
@@ -83,6 +83,12 @@ WHERE status = 'held' AND expires_at < now();
 The migration defines `code VARCHAR(20) UNIQUE` (nullable). Edge Functions (`ground-transports-availability`, `ground-transports-seat-selection`) query `boarding_points` by `code`. If a boarding point has `code = NULL`, it won't match API requests.
 
 **Recommendation:** Make `code` NOT NULL for API-facing boarding points, or add a WHERE clause filtering out NULL codes in seed data validation.
+
+### M4: No user authentication, user management, or ACL
+
+The prototype has no login, no user accounts, and no access control. The application is fully open — anyone with the URL can view and modify all data. This was intentionally deferred because the authentication method and permission model were not defined during prototyping.
+
+**For production:** Sourcegarden needs to discuss with mTours what authentication method to use (Supabase Auth, SSO, external IdP), what user roles and permissions are required, and whether multi-operator data isolation is needed. See `HANDOVER.md` section 6 for detailed recommendations.
 
 ---
 
