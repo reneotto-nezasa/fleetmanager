@@ -14,8 +14,8 @@ Deno.serve(async (req: Request) => {
   const body = (await req.json()) as ConnectSearchRequest;
   const supabase = getServiceClient();
 
-  // Must include Bus transport type (case-insensitive)
-  if (body.transportTypes && !body.transportTypes.some((t: string) => t.toLowerCase() === 'bus')) {
+  // Must include Bus transport type
+  if (body.transportTypes && !body.transportTypes.includes('Bus')) {
     return jsonResponse({ offers: [] });
   }
 

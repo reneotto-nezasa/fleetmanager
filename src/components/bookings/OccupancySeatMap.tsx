@@ -206,26 +206,24 @@ export function OccupancySeatMap({
 
       return (
         <ContextMenu key={seat.id}>
-          <TooltipProvider delayDuration={300}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ContextMenuTrigger asChild>
-                  {cellContent}
-                </ContextMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent>
-                <div className="flex flex-col gap-0.5">
-                  <div className="flex items-center gap-1.5">
-                    <User className="h-3 w-3" />
-                    <span className="font-medium">{passengerName || t('bookings.passenger')}</span>
+          <ContextMenuTrigger asChild>
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>{cellContent}</TooltipTrigger>
+                <TooltipContent>
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <User className="h-3 w-3" />
+                      <span className="font-medium">{passengerName || t('bookings.passenger')}</span>
+                    </div>
+                    <span className="font-mono text-[10px] opacity-70">
+                      {assignment.bookings.booking_ref}
+                    </span>
                   </div>
-                  <span className="font-mono text-[10px] opacity-70">
-                    {assignment.bookings.booking_ref}
-                  </span>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </ContextMenuTrigger>
           <ContextMenuContent>
             <ContextMenuItem onClick={() => onMoveSeat(assignment.id)}>
               {t('bookings.moveSeat')}
@@ -243,23 +241,21 @@ export function OccupancySeatMap({
     if (seat.status === 'blocked') {
       return (
         <ContextMenu key={seat.id}>
-          <TooltipProvider delayDuration={300}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ContextMenuTrigger asChild>
-                  {cellContent}
-                </ContextMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent>
-                <div className="flex flex-col gap-0.5">
-                  <span className="font-medium">{t('bookings.blocked')}</span>
-                  {seat.block_reason && (
-                    <span className="text-[10px] opacity-70">{seat.block_reason}</span>
-                  )}
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <ContextMenuTrigger asChild>
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>{cellContent}</TooltipTrigger>
+                <TooltipContent>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-medium">{t('bookings.blocked')}</span>
+                    {seat.block_reason && (
+                      <span className="text-[10px] opacity-70">{seat.block_reason}</span>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </ContextMenuTrigger>
           <ContextMenuContent>
             <ContextMenuItem onClick={() => onUnblockSeat(seat.id)}>
               {t('bookings.unblockSeat')}

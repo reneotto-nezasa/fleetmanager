@@ -1,6 +1,6 @@
 import { validateAuth, unauthorizedResponse } from '../_shared/auth.ts';
 import { getServiceClient } from '../_shared/supabase.ts';
-import { corsHeaders, jsonResponse, extractPathId } from '../_shared/types.ts';
+import { corsHeaders, jsonResponse } from '../_shared/types.ts';
 import type { ConnectBookingRequest } from '../_shared/types.ts';
 
 Deno.serve(async (req: Request) => {
@@ -11,7 +11,9 @@ Deno.serve(async (req: Request) => {
   const auth = validateAuth(req);
   if (!auth.valid) return unauthorizedResponse(auth.error!);
 
-  const quoteId = extractPathId(req.url);
+  const url = new URL(req.url);
+  const pathParts = url.pathname.split('/');
+  const quoteId = pathParts[pathParts.indexOf('groundTransports') + 1];
   if (!quoteId) return jsonResponse({ error: 'Missing quoteId' }, 400);
 
   const body = (await req.json()) as ConnectBookingRequest;
@@ -113,19 +115,16 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (instance) {
-      // Read current counter then increment (no RPC needed)
-      const { data: inst } = await supabase
-        .from('seat_map_instances')
-        .select('booked_seats')
-        .eq('id', instance.id)
-        .single();
-
-      if (inst) {
-        await supabase
+      await supabase.rpc('increment_booked_seats', {
+        p_instance_id: instance.id,
+        p_count: seatIds.length,
+      }).catch(() => {
+        // Fallback: manual increment
+        supabase
           .from('seat_map_instances')
-          .update({ booked_seats: inst.booked_seats + seatIds.length })
+          .update({ booked_seats: (instance as unknown as { booked_seats: number }).booked_seats + seatIds.length })
           .eq('id', instance.id);
-      }
+      });
     }
   }
 

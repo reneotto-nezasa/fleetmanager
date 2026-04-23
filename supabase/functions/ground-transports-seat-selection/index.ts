@@ -1,6 +1,6 @@
 import { validateAuth, unauthorizedResponse } from '../_shared/auth.ts';
 import { getServiceClient } from '../_shared/supabase.ts';
-import { corsHeaders, jsonResponse, extractPathId } from '../_shared/types.ts';
+import { corsHeaders, jsonResponse } from '../_shared/types.ts';
 import type { ConnectSeatSelectionRequest } from '../_shared/types.ts';
 
 const HOLD_TTL_MINUTES = 10;
@@ -13,7 +13,9 @@ Deno.serve(async (req: Request) => {
   const auth = validateAuth(req);
   if (!auth.valid) return unauthorizedResponse(auth.error!);
 
-  const offerId = extractPathId(req.url);
+  const url = new URL(req.url);
+  const pathParts = url.pathname.split('/');
+  const offerId = pathParts[pathParts.indexOf('groundTransports') + 1];
   if (!offerId) return jsonResponse({ error: 'Missing offerId' }, 400);
 
   const body = (await req.json()) as ConnectSeatSelectionRequest;

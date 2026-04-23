@@ -57,35 +57,6 @@ export interface ConnectAvailabilityRequest {
   paxCount: number;
 }
 
-/**
- * Extract a resource ID from the URL path.
- * Works with both production proxy paths (/v1/groundTransports/{id}/action)
- * and Supabase local dev paths (/functions/v1/function-name/{id}).
- */
-export function extractPathId(url: string): string | null {
-  const path = new URL(url).pathname;
-  const parts = path.split('/').filter(Boolean);
-
-  // Production proxy: /v1/groundTransports/{id}/...
-  const gtIdx = parts.indexOf('groundTransports');
-  if (gtIdx >= 0 && parts[gtIdx + 1]) {
-    return parts[gtIdx + 1];
-  }
-
-  // Supabase local via Kong proxy: /functions/v1/{function-name}/{id}
-  const fnIdx = parts.indexOf('v1');
-  if (fnIdx >= 0 && parts.length > fnIdx + 2) {
-    return parts[parts.length - 1];
-  }
-
-  // Edge Runtime internal: /{function-name}/{id} (no /functions/v1/ prefix)
-  if (parts.length >= 2) {
-    return parts[parts.length - 1];
-  }
-
-  return null;
-}
-
 export function corsHeaders(): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': '*',

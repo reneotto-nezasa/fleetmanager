@@ -1,7 +1,6 @@
 import { validateAuth, unauthorizedResponse } from '../_shared/auth.ts';
 import { getServiceClient } from '../_shared/supabase.ts';
-import { corsHeaders, jsonResponse, extractPathId } from '../_shared/types.ts';
-import type { ConnectAvailabilityRequest } from '../_shared/types.ts';
+import { corsHeaders, jsonResponse } from '../_shared/types.ts';
 
 const HOLD_TTL_MINUTES = 10;
 
@@ -13,12 +12,14 @@ Deno.serve(async (req: Request) => {
   const auth = validateAuth(req);
   if (!auth.valid) return unauthorizedResponse(auth.error!);
 
-  const serviceId = extractPathId(req.url);
+  const url = new URL(req.url);
+  const pathParts = url.pathname.split('/');
+  const serviceId = pathParts[pathParts.indexOf('groundTransports') + 1];
   if (!serviceId) {
     return jsonResponse({ error: 'Missing serviceId' }, 400);
   }
 
-  const body = await req.json() as ConnectAvailabilityRequest;
+  const body = await req.json() as { departureDate: string; boardingPointCode?: string; paxCount: number };
   const supabase = getServiceClient();
 
   // Find bus by code
@@ -134,13 +135,6 @@ Deno.serve(async (req: Request) => {
     .from('instance_seats')
     .update({ status: 'held', held_until: expiresAt })
     .in('id', seatIds);
-
-  // Create preliminary seat assignments so booking confirmation can find them
-  const assignments = seats.map((s: { id: string }) => ({
-    booking_id: booking.id,
-    instance_seat_id: s.id,
-  }));
-  await supabase.from('seat_assignments').insert(assignments);
 
   return jsonResponse({
     quoteId: booking.id,
